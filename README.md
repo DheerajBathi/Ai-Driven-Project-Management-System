@@ -7,7 +7,7 @@ AI-PMS is a premium AI-driven prototype that transforms unstructured meeting tra
 - **Premium AI Dashboard**: Glassmorphic UI with noise-textured backgrounds and smooth Framer Motion animations.
 - **Context-Aware Extraction**: Identifies tasks, assignees, deadlines, and priorities using LLMs.
 - **Conflict Detection**: Flags inconsistencies (e.g., two people mentioning different dates for the same task).
-- **Ultrafast Inference**: Powered by **Groq** (using Llama-3.3-70b-versatile).
+- **Ultrafast Inference**: Powered by **Groq** (using Llama-3.1-8b-instant).
 
 ## System Architecture
 The system follows a decoupled client-server architecture:
@@ -50,9 +50,9 @@ The system follows a decoupled client-server architecture:
    ```powershell
    cd ai-pms/ai-pms-frontend
    ```
-2. Install dependencies:
+2. Install dependencies (React 19 requires legacy-peer-deps for some components):
    ```powershell
-   npm install
+   npm install --legacy-peer-deps
    ```
 3. Start the development server:
    ```powershell
@@ -62,7 +62,7 @@ The system follows a decoupled client-server architecture:
 ## Tech Stack
 - **UI**: React 19, Tailwind CSS 4, Framer Motion, Lucide React, NoiseBackground
 - **Server**: FastAPI, Pydantic, Uvicorn
-- **AI**: Groq SDK (Llama 3.3 70B)
+- **AI**: Groq SDK (Llama 3.1 8B Instant)
 
 ## Example Transcript
 > "John: The dashboard should be ready by Friday.
