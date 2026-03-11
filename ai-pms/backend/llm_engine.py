@@ -27,6 +27,7 @@ def analyze_transcript(text: str) -> dict:
         )
         
         result_content = completion.choices[0].message.content
+        data = json.loads(result_content)
         # Deep Hardening & Type Casting
         hardened_tasks = []
         for task in data.get("tasks", []):
