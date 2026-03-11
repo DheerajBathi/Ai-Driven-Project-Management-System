@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import TranscriptInput from './components/TranscriptInput';
 import TaskCard from './components/TaskCard';
 import ConflictBanner from './components/ConflictBanner';
+import HistorySidebar from './components/HistorySidebar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Terminal, Github, Filter, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Terminal, Github, Filter, Sparkles, History } from 'lucide-react';
 
 function App() {
   const [transcript, setTranscript] = useState('');
@@ -11,7 +12,26 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeFilter, setActiveFilter] = useState('All');
+  const [history, setHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
   const resultsRef = useRef(null);
+
+  // Load history from localStorage on mounting
+  useEffect(() => {
+    const saved = localStorage.getItem('ai_pms_history');
+    if (saved) {
+      try {
+        setHistory(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse history", e);
+      }
+    }
+  }, []);
+
+  // Save history to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('ai_pms_history', JSON.stringify(history));
+  }, [history]);
 
   const analyzeTranscript = async () => {
     setLoading(true);
@@ -32,11 +52,32 @@ function App() {
       const result = await response.json();
       setData(result);
       setActiveFilter('All');
+
+      // Add to history
+      const newEntry = {
+        id: Date.now(),
+        timestamp: new Date().toLocaleString(),
+        transcript: transcript,
+        result: result
+      };
+      setHistory(prev => [newEntry, ...prev].slice(0, 20)); // Keep last 20
+
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadFromHistory = (entry) => {
+    setTranscript(entry.transcript);
+    setData(entry.result);
+    setActiveFilter('All');
+    setShowHistory(false);
+  };
+
+  const removeFromHistory = (id) => {
+    setHistory(prev => prev.filter(item => item.id !== id));
   };
 
   useEffect(() => {
@@ -74,11 +115,26 @@ function App() {
         </div>
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-white/50">
           <a href="#" className="hover:text-white transition-colors">Dashboard</a>
-          <a href="https://github.com" className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all border border-white/5">
+          <button 
+            onClick={() => setShowHistory(true)}
+            className="flex items-center gap-2 hover:text-white transition-colors cursor-pointer"
+          >
+            <History size={16} />
+            History
+          </button>
+          <a href="https://github.com/DheerajBathi/Ai-Driven-Project-Management-System.git" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all border border-white/5">
             <Github size={18} />
           </a>
         </div>
       </nav>
+
+      <HistorySidebar
+        isOpen={showHistory}
+        onClose={() => setShowHistory(false)}
+        history={history}
+        onSelect={loadFromHistory}
+        onDelete={removeFromHistory}
+      />
 
       {/* Hero Section */}
       <header className="max-w-4xl mx-auto mb-4 text-center">
@@ -139,7 +195,7 @@ function App() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 border-b border-white/5 pb-8">
                   <div>
                     <h2 className="text-3xl font-bold tracking-tight mb-2">
-                       Extracted Roadmap
+                      Extracted Roadmap
                     </h2>
                     <p className="text-white/40 text-sm font-medium uppercase tracking-widest flex items-center gap-2">
                       <Sparkles size={14} className="text-blue-400" />
@@ -153,16 +209,14 @@ function App() {
                       <button
                         key={opt.name}
                         onClick={() => setActiveFilter(opt.name)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                          activeFilter === opt.name
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeFilter === opt.name
                             ? 'bg-white text-black shadow-lg scale-105'
                             : 'text-white/40 hover:text-white/70 hover:bg-white/5'
-                        }`}
+                          }`}
                       >
                         {opt.name}
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${
-                          activeFilter === opt.name ? 'bg-black/10 text-black' : 'bg-white/10 text-white/40'
-                        }`}>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${activeFilter === opt.name ? 'bg-black/10 text-black' : 'bg-white/10 text-white/40'
+                          }`}>
                           {opt.count}
                         </span>
                       </button>
@@ -177,9 +231,9 @@ function App() {
                         <TaskCard key={`${task.task}-${idx}`} task={task} index={idx} />
                       ))
                     ) : (
-                      <motion.div 
-                        initial={{ opacity: 0 }} 
-                        animate={{ opacity: 1 }} 
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
                         className="col-span-full text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10"
                       >
                         <p className="text-white/30 italic">No tasks match the selected filter.</p>
